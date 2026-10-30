@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyGoals — Habit, Fitness & Productivity Tracker</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            },
+            exercise: {
+              light: '#fef2f2',
+              DEFAULT: '#ef4444',
+              badge: '#dc2626',
+              bg: '#fee2e2',
+            },
+            productivity: {
+              light: '#eff6ff',
+              DEFAULT: '#3b82f6',
+              badge: '#2563eb',
+              bg: '#dbeafe',
+            },
+            nutrition: {
+              light: '#f0fdf4',
+              DEFAULT: '#10b981',
+              badge: '#059669',
+              bg: '#d1fae5',
+            }
+          },
+          boxShadow: {
+            'glow': '0 0 25px -5px rgba(99, 102, 241, 0.25)',
+            'card': '0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white transition-colors duration-200">
+
+  <!-- ========================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER               -->
+  <!-- ========================================== -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ========================================== -->
+  <!-- ONBOARDING SECTION (STEPPED WIZARD)       -->
+  <!-- ========================================== -->
+  <div id="onboarding-flow" class="hidden min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white relative overflow-hidden">
+    <!-- Atmospheric background blobs -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-brand-600/30 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-xl w-full relative z-10">
+      <!-- Logo Header -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-400 shadow-glow mb-3">
+          <i data-lucide="target" class="w-8 h-8 text-white"></i>
+        </div>
+        <h1 class="font-display font-bold text-3xl tracking-tight">DailyGoals</h1>
+        <p class="text-slate-400 text-sm mt-1">Transform your habits, physique & daily focus</p>
+        
+        <!-- Step progress dots -->
+        <div class="flex items-center justify-center gap-2 mt-6">
+          <div id="step-dot-1" class="w-8 h-2 rounded-full bg-brand-500 transition-all duration-300"></div>
+          <div id="step-dot-2" class="w-2 h-2 rounded-full bg-slate-700 transition-all duration-300"></div>
+          <div id="step-dot-3" class="w-2 h-2 rounded-full bg-slate-700 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- CARD CONTAINER -->
+      <div class="bg-slate-800/80 backdrop-blur-xl border border-slate-700/60 rounded-3xl p-6 sm:p-8 shadow-2xl transition-all duration-300">
+        
+        <!-- STEP 1: WELCOME & NAME -->
+        <div id="onboard-step-1" class="space-y-6">
+          <div class="space-y-2">
+            <span class="text-xs uppercase font-bold tracking-wider text-brand-400">Step 1 of 3</span>
+            <h2 class="text-2xl font-bold font-display">Welcome! What should we call you?</h2>
+            <p class="text-slate-400 text-sm">Let's personalize your daily tracking dashboard.</p>
+          </div>
+
+          <form id="form-step-1" class="space-y-5" onsubmit="event.preventDefault(); goToOnboardingStep(2);">
+            <div>
+              <label for="input-name" class="block text-sm font-medium text-slate-300 mb-2">Your Name</label>
+              <div class="relative">
+                <i data-lucide="user" class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                <input 
+                  type="text" 
+                  id="input-name" 
+                  placeholder="e.g. Alex Morgan" 
+                  required
+                  class="w-full pl-12 pr-4 py-3.5 bg-slate-900/80 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  autofocus
+                >
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 px-6 rounded-2xl font-semibold bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-600 hover:to-indigo-700 shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 group transition">
+              <span>Continue to Health Profile</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- STEP 2: HEALTH & METRICS -->
+        <div id="onboard-step-2" class="hidden space-y-6">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase font-bold tracking-wider text-brand-400">Step 2 of 3</span>
+              <button type="button" onclick="goToOnboardingStep(1)" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Back
+              </button>
+            </div>
+            <h2 class="text-2xl font-bold font-display">Your Health Profile</h2>
+            <p class="text-slate-400 text-sm">We'll use these metrics to track your progress & BMI.</p>
+          </div>
+
+          <form id="form-step-2" class="space-y-4" onsubmit="event.preventDefault(); goToOnboardingStep(3);">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="input-weight" class="block text-sm font-medium text-slate-300 mb-1.5">Weight (kg)</label>
+                <div class="relative">
+                  <i data-lucide="scale" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    id="input-weight" 
+                    placeholder="70.5" 
+                    required 
+                    min="20" 
+                    max="300"
+                    class="w-full pl-10 pr-3 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition text-sm"
+                  >
+                </div>
+              </div>
+
+              <div>
+                <label for="input-height" class="block text-sm font-medium text-slate-300 mb-1.5">Height (cm)</label>
+                <div class="relative">
+                  <i data-lucide="ruler" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                  <input 
+                    type="number" 
+                    step="0.5" 
+                    id="input-height" 
+                    placeholder="175" 
+                    required 
+                    min="50" 
+                    max="260"
+                    class="w-full pl-10 pr-3 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition text-sm"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label for="input-allergies" class="block text-sm font-medium text-slate-300 mb-1.5">Allergies / Dietary Restrictions</label>
+              <div class="relative">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                <textarea 
+                  id="input-allergies" 
+                  rows="2" 
+                  placeholder="e.g. Peanuts, Lactose intolerant, None"
+                  class="w-full pl-10 pr-3 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition text-sm resize-none"
+                ></textarea>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Separate with commas or type 'None' if none.</p>
+            </div>
+
+            <div>
+              <label for="input-fitness-goal" class="block text-sm font-medium text-slate-300 mb-1.5">Primary Fitness Goal</label>
+              <select 
+                id="input-fitness-goal" 
+                class="w-full px-3.5 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-brand-500 transition text-sm"
+              >
+                <option value="Muscle Gain & Hypertrophy">Muscle Gain & Hypertrophy</option>
+                <option value="Fat Loss & Toning">Fat Loss & Toning</option>
+                <option value="Strength & Power">Strength & Power</option>
+                <option value="Endurance & General Health" selected>Endurance & General Health</option>
+              </select>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 px-6 rounded-2xl font-semibold bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-600 hover:to-indigo-700 shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 group transition mt-4">
+              <span>Set Daily Goals</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- STEP 3: INITIAL DAILY GOALS (3 CATEGORIES) -->
+        <div id="onboard-step-3" class="hidden space-y-6">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase font-bold tracking-wider text-brand-400">Step 3 of 3</span>
+              <button type="button" onclick="goToOnboardingStep(2)" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Back
+              </button>
+            </div>
+            <h2 class="text-2xl font-bold font-display">Pick Your Daily Core Goals</h2>
+            <p class="text-slate-400 text-sm">Select or add your everyday targets across 3 essential pillars.</p>
+          </div>
+
+          <div class="space-y-4 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+            <!-- Category: Exercise -->
+            <div class="p-4 rounded-2xl bg-slate-900/60 border border-rose-500/20">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+                  <i data-lucide="dumbbell" class="w-4 h-4"></i>
+                </span>
+                <span class="font-semibold text-rose-400 text-sm">1. Exercise Goals</span>
+              </div>
+              <div class="space-y-2 text-xs" id="preset-exercise-goals">
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" checked value="Complete 45 min gym / home workout" data-category="exercise" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>Complete 45 min gym / home workout</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" checked value="Walk 8,000 steps" data-category="exercise" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>Walk 8,000 steps</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" value="10 min mobility & posture stretching" data-category="exercise" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>10 min mobility & posture stretching</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Category: Productivity -->
+            <div class="p-4 rounded-2xl bg-slate-900/60 border border-blue-500/20">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
+                  <i data-lucide="zap" class="w-4 h-4"></i>
+                </span>
+                <span class="font-semibold text-blue-400 text-sm">2. Productivity Goals</span>
+              </div>
+              <div class="space-y-2 text-xs" id="preset-productivity-goals">
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" checked value="2 deep work sessions (90 mins each)" data-category="productivity" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>2 deep work sessions (90 mins each)</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" checked value="Read 15 pages of non-fiction book" data-category="productivity" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>Read 15 pages of non-fiction book</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" value="Zero inbox & plan tomorrow's top 3" data-category="productivity" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>Zero inbox & plan tomorrow's top 3</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Category: Nutrition -->
+            <div class="p-4 rounded-2xl bg-slate-900/60 border border-emerald-500/20">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                  <i data-lucide="salad" class="w-4 h-4"></i>
+                </span>
+                <span class="font-semibold text-emerald-400 text-sm">3. Nutrition Goals</span>
+              </div>
+              <div class="space-y-2 text-xs" id="preset-nutrition-goals">
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" checked value="Drink 3 liters of water" data-category="nutrition" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>Drink 3 liters of water</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" checked value="Hit daily protein target (130g+)" data-category="nutrition" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>Hit daily protein target (130g+)</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800/80 cursor-pointer transition">
+                  <input type="checkbox" value="No refined sugar or late night snacking" data-category="nutrition" class="rounded border-slate-600 text-brand-500 focus:ring-brand-500 w-4 h-4">
+                  <span>No refined sugar or late night snacking</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" onclick="finishOnboarding()" class="w-full py-4 px-6 rounded-2xl font-bold bg-gradient-to-r from-emerald-500 via-brand-500 to-indigo-600 hover:opacity-95 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group transition">
+            <span>Launch My Daily Dashboard</span>
+            <i data-lucide="sparkles" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MAIN APP DASHBOARD (HOME PAGE)             -->
+  <!-- ========================================== -->
+  <div id="main-dashboard" class="flex-1 flex flex-col hidden">
+    
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+        
+        <!-- Brand & Greeting -->
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-md shadow-brand-500/20 text-white flex-shrink-0">
+            <i data-lucide="target" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-display font-bold text-lg sm:text-xl text-slate-900 dark:text-white leading-tight">DailyGoals</h1>
+              <span id="current-day-badge" class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/40">
+                Today
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Welcome back, <span id="header-user-name" class="font-semibold text-slate-700 dark:text-slate-200">Champion</span>!
+            </p>
+          </div>
+        </div>
+
+        <!-- Top Actions -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Button: Update Height & Weight (Requirement 6) -->
+          <button 
+            type="button" 
+            onclick="openHealthUpdateModal()" 
+            class="inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold border border-slate-200/80 dark:border-slate-700 transition shadow-sm active:scale-95"
+            title="Log new Weight & Height measurements"
+          >
+            <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i>
+            <span class="hidden xs:inline">Update</span>
+            <span class="hidden md:inline">Health Info</span>
+            <span class="xs:hidden">Health</span>
+          </button>
+
+          <!-- Button: Dark / Light Mode Toggle -->
+          <button 
+            type="button" 
+            onclick="toggleDarkMode()" 
+            id="theme-toggle-btn"
+            class="p-2 sm:p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition"
+            aria-label="Toggle Theme"
+          >
+            <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+            <i data-lucide="sun" class="w-4 h-4 hidden dark:inline"></i>
+          </button>
+
+          <!-- Profile Badge dropdown/trigger -->
+          <button 
+            type="button" 
+            onclick="openProfileDetailsModal()"
+            class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition"
+          >
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs" id="user-avatar-initials">
+              U
+            </div>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+      
+      <!-- ========================================== -->
+      <!-- TOP HERO SECTION: GOAL COMPLETION % & STATS-->
+      <!-- (Requirement 5 & Requirement 6 quick info) -->
+      <!-- ========================================== -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Main Progress Bar & Completion % (Large) -->
+        <div class="lg:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-indigo-900/40 flex flex-col justify-between">
+          <div class="absolute -right-16 -top-16 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-indigo-200 border border-white/10">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-400"></i>
+                <span id="hero-date-string">Thursday, Oct 29</span>
+              </div>
+              <span id="hero-completion-tag" class="text-xs px-2.5 py-1 rounded-full font-semibold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                In Progress
+              </span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-5">
+              <div>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Today's Goal Mastery</h2>
+                <p class="text-slate-300 text-sm mt-1">Consistency compounds. Complete your daily pillars to stay sharp.</p>
+              </div>
+              <div class="text-left sm:text-right">
+                <span id="hero-completion-pct" class="font-display text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-brand-300 to-indigo-300">
+                  0%
+                </span>
+                <p class="text-xs text-slate-400 font-medium mt-0.5" id="hero-completed-count">0 of 0 tasks finished</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Animated Progress Bar -->
+          <div class="space-y-3">
+            <div class="w-full h-4 sm:h-5 bg-slate-800/90 rounded-full overflow-hidden p-1 border border-slate-700/80 shadow-inner">
+              <div 
+                id="hero-progress-bar-fill" 
+                class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-indigo-500 to-brand-400 transition-all duration-700 ease-out" 
+                style="width: 0%"
+              ></div>
+            </div>
+            
+            <!-- Category Mini breakdown badges -->
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300 pt-1">
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Exercise: <strong id="stat-cat-exercise" class="text-white">0/0</strong>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Productivity: <strong id="stat-cat-productivity" class="text-white">0/0</strong>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Nutrition: <strong id="stat-cat-nutrition" class="text-white">0/0</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Current Health Snapshot & Fast Update Widget (Requirement 6) -->
+        <div class="rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-card border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                  <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Health Vitals</h3>
+              </div>
+              <button 
+                onclick="openHealthUpdateModal()" 
+                class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+              >
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Log Update
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Current Weight</span>
+                <div class="flex items-baseline gap-1">
+                  <span id="quick-weight-val" class="font-display font-bold text-2xl text-slate-900 dark:text-white">--</span>
+                  <span class="text-xs text-slate-500 font-medium">kg</span>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Height</span>
+                <div class="flex items-baseline gap-1">
+                  <span id="quick-height-val" class="font-display font-bold text-2xl text-slate-900 dark:text-white">--</span>
+                  <span class="text-xs text-slate-500 font-medium">cm</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- BMI & Allergies indicator -->
+            <div class="space-y-2.5 text-xs">
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Calculated BMI</span>
+                <span id="quick-bmi-val" class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">--</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80">
+                <span class="text-slate-500 dark:text-slate-400 font-medium block mb-0.5">Allergies & Restrictions:</span>
+                <span id="quick-allergies-val" class="text-slate-700 dark:text-slate-300 font-semibold line-clamp-1">None</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Last updated info -->
+          <div class="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+            <span id="health-last-updated">Last logged: Today</span>
+            <span class="text-emerald-500 font-medium flex items-center gap-1">
+              <i data-lucide="check-circle" class="w-3 h-3"></i> Saved Locally
+            </span>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ========================================== -->
+      <!-- SECTION: DAILY GOALS & TASKS (3 PILLARS)   -->
+      <!-- (Requirement 2 & Requirement 3 creative list) -->
+      <!-- ========================================== -->
+      <section class="space-y-4">
+        
+        <!-- Controls & Category Filter Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="font-display font-bold text-xl sm:text-2xl text-slate-900 dark:text-white flex items-center gap-2">
+              <span>Daily Goals & Habits</span>
+              <span id="active-goals-pill" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">0</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Track and conquer your daily commitments across 3 core pillars.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Filter Pills -->
+            <div class="inline-flex p-1 bg-slate-200/70 dark:bg-slate-800/80 rounded-xl text-xs font-semibold">
+              <button 
+                type="button" 
+                onclick="filterGoals('all')" 
+                id="filter-all-btn" 
+                class="filter-pill-btn px-3 py-1.5 rounded-lg transition active bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+              >
+                All
+              </button>
+              <button 
+                type="button" 
+                onclick="filterGoals('exercise')" 
+                id="filter-exercise-btn" 
+                class="filter-pill-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                🏃 Exercise
+              </button>
+              <button 
+                type="button" 
+                onclick="filterGoals('productivity')" 
+                id="filter-productivity-btn" 
+                class="filter-pill-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                ⚡ Productivity
+              </button>
+              <button 
+                type="button" 
+                onclick="filterGoals('nutrition')" 
+                id="filter-nutrition-btn" 
+                class="filter-pill-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                🥗 Nutrition
+              </button>
+            </div>
+
+            <!-- Add Goal Trigger Button -->
+            <button 
+              type="button" 
+              onclick="openAddGoalModal()" 
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-brand-500/20 transition active:scale-95"
+            >
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Goal</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Goals Responsive Grid/List -->
+        <div id="goals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Empty State (if no goals in category) -->
+        <div id="goals-empty-state" class="hidden text-center py-12 px-4 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+          <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 dark:bg-slate-800 text-indigo-500 flex items-center justify-center mb-3">
+            <i data-lucide="check-square" class="w-6 h-6"></i>
+          </div>
+          <h4 class="font-display font-bold text-slate-800 dark:text-slate-200 text-base">No goals in this category</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4">Add your daily targets to stay consistent and hit your milestones.</p>
+          <button 
+            type="button" 
+            onclick="openAddGoalModal()" 
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-md shadow-brand-500/20"
+          >
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Goal Now
+          </button>
+        </div>
+
+      </section>
+
+
+      <!-- ========================================== -->
+      <!-- SECTION: DAY-WISE GYM PLANNER              -->
+      <!-- (Requirement 3 & Requirement 4)            -->
+      <!-- ========================================== -->
+      <section class="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+        
+        <!-- Header with Day Navigation & Action -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+                <i data-lucide="dumbbell" class="w-5 h-5"></i>
+              </div>
+              <h2 class="font-display font-bold text-xl sm:text-2xl text-slate-900 dark:text-white">
+                Day-Wise Gym & Muscle Planner
+              </h2>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Organize your weekly split, targeted muscle groups, and check off today's prescribed workout.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Split preset button -->
+            <button 
+              type="button" 
+              onclick="openPresetSplitModal()" 
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition border border-slate-200/60 dark:border-slate-700"
+            >
+              <i data-lucide="layers" class="w-4 h-4 text-brand-500"></i>
+              <span>Preset Splits</span>
+            </button>
+
+            <!-- Add / Edit routine for selected day -->
+            <button 
+              type="button" 
+              onclick="openGymPlannerFormModal()" 
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-indigo-600 hover:opacity-95 text-white font-semibold text-xs sm:text-sm shadow-md shadow-rose-500/20 transition active:scale-95"
+            >
+              <i data-lucide="edit-3" class="w-4 h-4"></i>
+              <span>Edit Day Routine</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekly Day Selector Tabs (Mon - Sun) -->
+        <div class="overflow-x-auto pb-2 custom-scrollbar">
+          <div class="flex items-center gap-2 min-w-[620px] p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/60 dark:border-slate-700/60" id="gym-day-tabs">
+            <!-- Generated via JS: Monday - Sunday buttons with today highlight -->
+          </div>
+        </div>
+
+        <!-- ACTIVE SELECTED DAY WORKOUT VIEW & MUSCLE GROUPS -->
+        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-card p-6 sm:p-8 space-y-6">
+          
+          <!-- Top summary for the selected day -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h3 id="gym-selected-day-name" class="font-display font-extrabold text-2xl text-slate-900 dark:text-white">
+                  Thursday's Workout
+                </h3>
+                <span id="gym-is-today-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  Today's Session
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="gym-selected-day-desc">
+                Targeting muscle groups scheduled for this day
+              </p>
+            </div>
+
+            <!-- Targeted Muscle Group Badges -->
+            <div class="flex flex-col sm:items-end gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Targeted Muscle Groups</span>
+              <div id="gym-muscle-badges" class="flex flex-wrap items-center gap-1.5">
+                <!-- Badges populated via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Exercises List for this Day -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="font-display font-bold text-slate-800 dark:text-slate-200 text-base flex items-center gap-2">
+                <span>Prescribed Exercises</span>
+                <span id="gym-exercise-count" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                  0 Exercises
+                </span>
+              </h4>
+              <span class="text-xs text-slate-400">Click checkboxes to tick off completed sets</span>
+            </div>
+
+            <div id="gym-exercises-list" class="space-y-3">
+              <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Empty State for Rest Day or No Exercises -->
+            <div id="gym-empty-state" class="hidden text-center py-10 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800">
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-500 flex items-center justify-center mb-2">
+                <i data-lucide="coffee" class="w-6 h-6"></i>
+              </div>
+              <h5 class="font-bold text-slate-800 dark:text-slate-200 text-sm" id="gym-empty-title">Rest & Recovery Day</h5>
+              <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4" id="gym-empty-desc">
+                No intense workout scheduled for this day. Focus on hydration, stretching, and nutrition.
+              </p>
+              <button 
+                type="button" 
+                onclick="openGymPlannerFormModal()" 
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-md shadow-brand-500/20"
+              >
+                <i data-lucide="plus" class="w-4 h-4"></i> Configure Routine
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MOTIVATIONAL FOOTER (Requirement 7)        -->
+    <!-- ========================================== -->
+    <footer class="mt-auto border-t border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md py-8 px-4 sm:px-6 lg:px-8 transition">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        
+        <!-- Brand & Tagline -->
+        <div class="space-y-2 max-w-xl">
+          <div class="flex items-center justify-center sm:justify-start gap-2">
+            <div class="w-6 h-6 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+              <i data-lucide="target" class="w-3.5 h-3.5"></i>
+            </div>
+            <span class="font-display font-bold text-slate-900 dark:text-white text-sm">DailyGoals Tracker</span>
+            <span class="text-xs text-slate-400">• Local & Private</span>
+          </div>
+
+          <!-- MOTIVATIONAL TAGLINE (Requirement 7) -->
+          <p class="text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r from-brand-600 via-indigo-600 to-emerald-600 dark:from-brand-400 dark:via-indigo-300 dark:to-emerald-400 italic">
+            "Transform your ambition into daily discipline — one rep, one task, one healthy choice at a time."
+          </p>
+          <p class="text-xs text-slate-400">
+            Small daily improvements over time lead to stunning, undeniable results. Keep showing up.
+          </p>
+        </div>
+
+        <!-- Quick actions / Reset option -->
+        <div class="flex flex-col items-center sm:items-end gap-2 text-xs text-slate-400">
+          <div class="flex items-center gap-3">
+            <button onclick="resetDailyProgress()" class="hover:text-brand-600 dark:hover:text-brand-400 transition underline underline-offset-2">
+              Reset Today's Checks
+            </button>
+            <span>•</span>
+            <button onclick="confirmResetAllData()" class="text-rose-500 hover:text-rose-600 transition underline underline-offset-2">
+              Clear All Data
+            </button>
+          </div>
+          <span class="text-[11px] text-slate-400">&copy; 2026 DailyGoals. Built with HTML5, TailwindCSS & Vanilla JS.</span>
+        </div>
+
+      </div>
+    </footer>
+
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODALS                                     -->
+  <!-- ========================================== -->
+
+  <!-- MODAL 1: ADD NEW DAILY GOAL                -->
+  <div id="modal-add-goal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl relative animate-scaleIn">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">Add New Daily Goal</h3>
+        </div>
+        <button onclick="closeModal('modal-add-goal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-new-goal" onsubmit="handleCreateGoal(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Goal Category</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="goalCategory" value="exercise" checked class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-950/30 peer-checked:text-rose-600 dark:peer-checked:text-rose-400 transition text-xs font-semibold flex flex-col items-center gap-1">
+                <i data-lucide="dumbbell" class="w-4 h-4"></i>
+                <span>Exercise</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="goalCategory" value="productivity" class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-950/30 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 transition text-xs font-semibold flex flex-col items-center gap-1">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+                <span>Productivity</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="goalCategory" value="nutrition" class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-950/30 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400 transition text-xs font-semibold flex flex-col items-center gap-1">
+                <i data-lucide="salad" class="w-4 h-4"></i>
+                <span>Nutrition</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label for="new-goal-title" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Goal / Task Title</label>
+          <input 
+            type="text" 
+            id="new-goal-title" 
+            required 
+            placeholder="e.g. 30 min cardio run, Drink 3L water..."
+            class="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+        </div>
+
+        <div>
+          <label for="new-goal-notes" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Optional Details or Target</label>
+          <input 
+            type="text" 
+            id="new-goal-notes" 
+            placeholder="e.g. In the morning before 9 AM"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button 
+            type="button" 
+            onclick="closeModal('modal-add-goal')" 
+            class="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-md shadow-brand-500/25 transition"
+          >
+            Create Goal
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 2: UPDATE HEALTH INFO (HEIGHT & WEIGHT) (Requirement 6) -->
+  <div id="modal-health-update" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl relative animate-scaleIn">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+            <i data-lucide="scale" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">Update Health Vitals</h3>
+            <p class="text-xs text-slate-400">Record new measurements for today or another date</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-health-update')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-update-health" onsubmit="handleUpdateHealth(event)" class="space-y-4">
+        <div>
+          <label for="update-health-date" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Date of Measurement</label>
+          <input 
+            type="date" 
+            id="update-health-date" 
+            required
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="update-weight" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Weight (kg)</label>
+            <input 
+              type="number" 
+              step="0.1" 
+              id="update-weight" 
+              required 
+              min="20" 
+              max="300"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+          </div>
+
+          <div>
+            <label for="update-height" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Height (cm)</label>
+            <input 
+              type="number" 
+              step="0.5" 
+              id="update-height" 
+              required 
+              min="50" 
+              max="260"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label for="update-allergies" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Update Allergies / Notes</label>
+          <textarea 
+            id="update-allergies" 
+            rows="2"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+          ></textarea>
+        </div>
+
+        <!-- History Preview -->
+        <div id="health-history-preview" class="pt-2">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Recent Logs</span>
+          <div id="health-history-items" class="space-y-1.5 max-h-24 overflow-y-auto text-xs pr-1 custom-scrollbar">
+            <!-- Items injected by JS -->
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button 
+            type="button" 
+            onclick="closeModal('modal-health-update')" 
+            class="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md shadow-emerald-500/25 transition"
+          >
+            Save Vitals
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 3: DAY-WISE GYM PLANNER FORM (Requirement 3 & 4) -->
+  <div id="modal-gym-planner" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl relative max-h-[90vh] flex flex-col animate-scaleIn">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+            <i data-lucide="dumbbell" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">Configure Gym Routine</h3>
+            <p class="text-xs text-slate-400">Specify muscle groups hit and precise exercise details</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-gym-planner')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <form id="form-gym-planner" onsubmit="handleSaveGymDayRoutine(event)" class="overflow-y-auto pr-1 py-4 space-y-5 custom-scrollbar flex-1">
+        
+        <!-- Day Select -->
+        <div>
+          <label for="gym-form-day-select" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Target Day of Week</label>
+          <select 
+            id="gym-form-day-select" 
+            onchange="loadGymPlannerFormForDay(this.value)"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+          </select>
+        </div>
+
+        <!-- Muscle Groups Multi-Select Pills -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Muscle Groups Hit</label>
+            <span class="text-[11px] text-slate-400">Select all that apply</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="muscle-groups-picker">
+            <!-- Badges like Chest, Back, Shoulders, Legs, Biceps, Triceps, Core/Abs, Full Body, Rest -->
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Chest" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Chest
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Back" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Back
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Legs / Quads" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Legs / Quads
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Shoulders" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Shoulders
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Biceps" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Biceps
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Triceps" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Triceps
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Core / Abs" class="peer sr-only muscle-checkbox">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-rose-500 peer-checked:text-white peer-checked:border-rose-500 font-medium transition">
+                Core / Abs
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="checkbox" value="Rest Day" class="peer sr-only muscle-checkbox" onchange="toggleRestDayOption(this)">
+              <div class="p-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:bg-slate-700 peer-checked:text-amber-300 peer-checked:border-slate-700 font-medium transition">
+                Rest Day ☕
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Exercises Builder -->
+        <div id="exercises-form-section">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Exercises For This Day</label>
+            <button 
+              type="button" 
+              onclick="addExerciseInputRow()" 
+              class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Exercise
+            </button>
+          </div>
+
+          <div id="exercise-rows-container" class="space-y-2.5">
+            <!-- Dynamic rows generated here -->
+          </div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <button 
+            type="button" 
+            onclick="setDayAsRestDay()" 
+            class="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+          >
+            Mark As Rest Day
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              onclick="closeModal('modal-gym-planner')" 
+              class="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-md shadow-brand-500/25 transition"
+            >
+              Save Day Routine
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+
+  <!-- MODAL 4: PRESET SPLIT SELECTION            -->
+  <div id="modal-preset-splits" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl relative animate-scaleIn">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400">
+            <i data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">Load Gym Routine Preset</h3>
+            <p class="text-xs text-slate-400">Quickly apply proven weekly workout splits</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-preset-splits')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div onclick="applySplitPreset('ppl')" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-slate-900 dark:text-white">Push / Pull / Legs (PPL) Split</h4>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-600 font-bold">Popular</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Chest+Triceps (Mon), Back+Biceps (Tue), Legs+Core (Wed), Push (Thu), Pull (Fri), Legs (Sat), Rest (Sun).</p>
+        </div>
+
+        <div onclick="applySplitPreset('upper_lower')" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-slate-900 dark:text-white">Upper / Lower Split (4-Day)</h4>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">Balanced</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Upper Body (Mon), Lower Body (Tue), Rest (Wed), Upper (Thu), Lower (Fri), Active Recovery / Rest (Sat & Sun).</p>
+        </div>
+
+        <div onclick="applySplitPreset('bro_split')" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-slate-900 dark:text-white">Body-Part Split ("Bro Split")</h4>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">Classic</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Chest (Mon), Back (Tue), Shoulders (Wed), Legs (Thu), Arms & Core (Fri), Rest (Sat & Sun).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL 5: USER PROFILE VIEW & EDIT          -->
+  <div id="modal-profile-details" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl relative animate-scaleIn">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">User Profile</h3>
+        <button onclick="closeModal('modal-profile-details')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xl" id="profile-modal-avatar">
+            U
+          </div>
+          <div>
+            <h4 class="font-display font-bold text-lg text-slate-900 dark:text-white" id="profile-modal-name">User Name</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400" id="profile-modal-goal">General Fitness</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+            <span class="text-slate-400 uppercase text-[10px] font-bold block mb-1">Height</span>
+            <span id="profile-modal-height" class="text-slate-900 dark:text-white font-bold text-base">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+            <span class="text-slate-400 uppercase text-[10px] font-bold block mb-1">Weight</span>
+            <span id="profile-modal-weight" class="text-slate-900 dark:text-white font-bold text-base">--</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs">
+          <span class="text-slate-400 uppercase text-[10px] font-bold block mb-1">Allergies / Restrictions</span>
+          <p id="profile-modal-allergies" class="text-slate-700 dark:text-slate-300 font-medium">None</p>
+        </div>
+
+        <div class="pt-2 flex items-center justify-between gap-3">
+          <button 
+            type="button" 
+            onclick="restartOnboarding()" 
+            class="text-xs text-brand-600 hover:underline flex items-center gap-1 font-semibold"
+          >
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Re-run Onboarding
+          </button>
+          <button 
+            type="button" 
+            onclick="closeModal('modal-profile-details')" 
+            class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- App JavaScript File -->
+  <script src="script.js"></script>
+</body>
+</html>
